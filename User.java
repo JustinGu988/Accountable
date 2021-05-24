@@ -3,7 +3,7 @@ import java.util.*;
 public class User {
     String userName;
     ArrayList<User> friends;
-    ArrayList<Transaction> payerTran;   //u paid the bill
+    ArrayList<Transaction> payerTran;   //you paid the bill
     ArrayList<Transaction> debtorTran;  //others paid the bill
 
 
@@ -32,30 +32,44 @@ public class User {
     ///////////////////////////////////
     //Friends
     ///////////////////////////////////
+
+    /*Add friend from into firend list
+    Add me into friend's friend list*/
     public void addFriend(User f){
         //avoid duplication
         if(this.friends.contains(f)){
             System.out.println("Friend exists");
             return;
         }
-
+        //add friend into my firend list
         ArrayList<User> temp = this.getFriends();
         temp.add(f);
         this.setFriends(temp);
+        //add me into friend's friend list
+        ArrayList<User> temp2 = f.getFriends();
+        temp2.add(this);
+        f.setFriends(temp2);
     }
 
+    /*Remove friend from my firend list
+    Remove me from friend's friend list*/
     public void removeFriend(User f){
         if(this.friends.contains(f)){
+            //remove friend from my firend list
             ArrayList<User> temp = this.getFriends();
             temp.remove(f);
             this.setFriends(temp);
+            //remove me from friend's friend list
+            ArrayList<User> temp2 = f.getFriends();
+            temp2.remove(this);
+            f.setFriends(temp2);
         } else {
             System.out.println("Friend does not exist");
         }
     }
 
     public void printAllFriends(){
-        System.out.println("All friends:");
+        System.out.println(this.getUserName() + "'s All friends:");
         for(User curr : this.getFriends()) System.out.println(curr.getUserName());
         System.out.println();
     }
@@ -72,7 +86,7 @@ public class User {
         temp.add(pt);
         this.setPayerTran(temp);
 
-        //Add debtor tran to other debtors
+        //Add debtor tran to debtors' records
         User[] allParticipent = pt.getBillParticipent();
         for(User p : allParticipent){
             //Avoid adding myself as a debtor
@@ -86,6 +100,22 @@ public class User {
         temp.add(dt);
         this.setDebtorTran(temp);
     }
+
+    /*Calculate how much you owe a friend*/
+    public Double sumDebtByFriend(User u){
+        Double result = 0.0;
+        if(this.getDebtorTran() != null && this.getDebtorTran().size() != 0){
+            for(Transaction curr : this.getDebtorTran()) {
+                if(curr.getPayer() == u){
+                    HashMap<User, Double> currHashMap = curr.getBillSplit();
+                    result += currHashMap.get(this);
+                }
+            }
+        }
+        return result;
+    }
+
+
 
     public void printAllPayerTran(){
         if(this.getPayerTran() == null || this.getPayerTran().size() == 0){
@@ -107,6 +137,22 @@ public class User {
             System.out.print("Paid by: " + curr.getPayer().getUserName() + " ");
             curr.printOneTransaction();
         }
+        System.out.println();
+    }
+
+    public void printDebtorTranByFriend(User u){
+        if(this.getDebtorTran() == null || this.getDebtorTran().size() == 0){
+            System.out.println("No Debtor Transactions for " + this.getUserName());
+            return;
+        }
+        System.out.println(this.getUserName() + " as a debtor to " + u.getUserName() + " :");
+        for(Transaction curr : this.getDebtorTran()) {
+            if(curr.getPayer() == u){
+                System.out.print("Paid by: " + curr.getPayer().getUserName() + " ");
+                curr.printOneTransaction();
+            }
+        }
+        System.out.println("Total debt amount: " + sumDebtByFriend(u));
         System.out.println();
     }
     
